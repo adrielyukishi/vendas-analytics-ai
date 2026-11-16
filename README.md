@@ -1,71 +1,115 @@
-# Analytics — Inteligência comercial acessível para pequenos negócios
+# Analytics — análise comercial para pequenos negócios
 
-> Projeto acadêmico e experimental de Ciência de Dados, com foco em inclusão digital e tomada de decisão comercial.
+Protótipo acadêmico do curso de Ciência de Dados da UNINTER.
+**Adriel Yukishi Figueiredo Yamada — RU 2173582.**
 
-## Visão geral
+## O que esta versão faz
 
-O **Analytics** busca transformar dados de vendas em indicadores compreensíveis e recomendações práticas para pequenos empreendedores e vendedores de marketplaces.
+- Dashboard de receita bruta, pedidos únicos por canal, ticket médio, resultado e margem estimados.
+- Filtros por data e canal, atalhos de 7, 30 e 90 dias.
+- Gráficos de evolução e participação dos canais calculados sobre as mesmas vendas filtradas.
+- Curva ABC por faturamento, com participação e percentual acumulado por SKU.
+- Cobertura de estoque e alertas de reposição, com busca por nome ou SKU.
+- Importação validada de CSV e exportação dos registros filtrados.
+- Demonstração inicial com 90 dias de dados fictícios, identificada na interface.
 
-**Problema:** informações de vendas costumam ficar dispersas em planilhas, sistemas de caixa e plataformas digitais. Muitos negócios conseguem registrar operações, mas têm dificuldade para analisar resultados e decidir o próximo passo.
+## Executar no computador
 
-**Proposta:** um painel simples que centraliza os principais indicadores, explica mudanças relevantes e ajuda o empreendedor a identificar oportunidades e riscos. O projeto não substitui a análise humana nem oferece garantias de resultado financeiro.
+Instale Node.js 22.12 ou superior e Git. No terminal:
 
-## Público-alvo
+```bash
+git clone https://github.com/adrielyukishi/vendas-analytics-ai.git
+cd vendas-analytics-ai
+npm install
+npm run dev
+```
 
-- Pequenos comerciantes com histórico de vendas em planilhas ou sistemas de caixa;
-- Vendedores de marketplaces que precisam consolidar dados de diferentes canais;
-- Pessoas com pouca familiaridade com ferramentas de análise de dados.
+Abra o endereço exibido no terminal, normalmente http://localhost:5173.
 
-## MVP proposto (primeira versão verificável)
+```bash
+npm test
+npm run build
+npm run preview
+```
 
-1. **Importação de dados:** aceitar um arquivo CSV padronizado com vendas fictícias ou autorizado pelo usuário.
-2. **Validação dos dados:** verificar campos obrigatórios, tipos, valores e duplicidades.
-3. **Painel gerencial:** exibir faturamento bruto, pedidos, ticket médio, tendências e ranking de produtos.
-4. **Diagnósticos explicáveis:** sinalizar variações de vendas, concentração por produto/canal e oportunidades de investigação.
-5. **Modo demonstração:** funcionar com uma base *explicitamente identificada* como fictícia, sem confundi-la com dados reais.
+O build gera a pasta `dist/`. A configuração da Vercel está em `vercel.json`.
+Para testar o navegador:
 
-**Fora do primeiro MVP:** integração automática com todos os marketplaces, precificação automática, previsão por IA, cálculo preciso de lucro sem custos completos e recomendações que executem ações sem revisão do usuário.
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
 
-## Indicadores e cuidados
+A workflow **Validar projeto** executa testes, compilação TypeScript, build e testes de navegador. Capturas ficam no artefato `verificacao-visual` de cada execução.
+A presença dos testes não significa que todos passaram: confira o resultado em **Actions**.
 
-| Indicador | Definição inicial | Observação |
-| --- | --- | --- |
-| Faturamento bruto | Soma dos valores de itens vendidos antes de abatimentos | Definir como tratar cancelamentos e devoluções |
-| Pedidos | Contagem de pedidos únicos válidos | Evitar duplicação por linha de item |
-| Ticket médio | Faturamento / número de pedidos | Apenas quando pedidos > 0 |
-| Evolução temporal | Vendas agrupadas por dia/semana/mês | Padronizar fuso horário e datas |
-| Lucro e margem | Somente com custos e taxas confiáveis | Se dados estiverem incompletos, rotular como **estimativa** ou não exibir |
+## Importar vendas
 
-A recomendação deve sempre informar **qual indicador originou o alerta**, **qual período foi considerado** e **quais limitações existem**.
+Na tela **Importar e exportar**, baixe o exemplo fictício, preencha-o e selecione seu CSV.
+A importação substitui a base apenas quando todas as linhas são válidas.
+Limites: 5 MB e 50.000 registros; codificação UTF-8; vírgula ou ponto e vírgula como delimitador.
 
-## Estado atual (novembro de 2026)
+| Coluna | Regra |
+| --- | --- |
+| data | Data válida em AAAA-MM-DD |
+| pedido | Identificador do pedido, sem dados pessoais |
+| sku | Identificador do produto, compartilhado entre canais |
+| produto | Nome do produto |
+| canal | Nome do canal de venda |
+| quantidade | Inteiro positivo |
+| preco_unitario | Valor não negativo, sem separador de milhar |
+| custo_unitario | Custo de uma unidade; vazio quando desconhecido |
+| taxas | Total de taxas da linha, não por unidade; vazio quando desconhecido |
+| estoque | Saldo global do SKU na data; inteiro não negativo ou vazio |
+| status | pago, cancelado ou devolvido |
 
-- **Proposta acadêmica:** elaborada para Atividade Extensionista I do curso de Ciência de Dados da UNINTER.
-- **Protótipo visual:** registrado em capturas de dashboard, estoque e carteira de clientes no documento acadêmico.
-- **Código no GitHub:** organização e revisão técnica pendentes; a Issue #1 contém um exemplo inicial, que **não deve ser tratado como implementação validada**.
-- **Integrações e funcionamento:** precisam ser auditados antes de qualquer alegação de funcionamento em produção.
+Todos os cabeçalhos são obrigatórios, mas custo, taxas e estoque aceitam células vazias.
+Com delimitador ponto e vírgula, valores como `10,50` são aceitos.
+Aspas e quebras de linha dentro de campos são suportadas.
+Linhas repetidas para **data + pedido + SKU + canal** são rejeitadas; consolide parcelas do mesmo item antes de importar.
+O mesmo SKU deve representar o mesmo produto em toda a base.
 
-## Evolução planejada
+## Regras dos indicadores
 
-Consulte [o roteiro de desenvolvimento](docs/ROADMAP.md) e [o escopo detalhado do MVP](docs/ESCOPO-MVP.md).
+- **Receita:** soma de quantidade × preço unitário de itens pagos, antes de custos e taxas.
+- **Pedidos:** identificadores únicos de canal + pedido, contando apenas pedidos com itens pagos.
+- **Resultado estimado:** receita − quantidade × custo unitário − taxas por linha.
+- **Margem estimada:** resultado / receita × 100; não calculada para receita zero.
+- Se faltar custo ou taxa em qualquer linha paga filtrada, resultado e margem ficam indisponíveis.
+- Custos fixos, impostos, frete ou outras despesas não informadas não são deduzidos. O resultado não é lucro líquido contábil.
+- Cancelamentos e devoluções são excluídos integralmente. Devoluções parciais e conciliação financeira não estão implementadas.
+- Atalhos terminam na última data da base. Datas inicial e final são inclusivas.
+- **Curva ABC:** ordenação por faturamento, com A até aproximadamente 80%, B até 95% e C restante. O item que atravessa o limite permanece na classe que iniciou; não são percentuais da quantidade de SKUs.
+- **Estoque:** último saldo não vazio por SKU na base completa; se houver vários na mesma data, prevalece o último registro. Não soma saldos de canais. Forneça um saldo global consolidado.
+- **Cobertura:** saldo / média diária de unidades pagas no intervalo e canal selecionados, arredondada para baixo. Estoque global permanece independente do canal. Até 10 dias: repor agora; até 30: repor em breve; acima: saudável. Sem vendas: sem giro; saldo zero: crítico.
+- A cobertura pressupõe vendas constantes, sem entradas futuras ou prazo de fornecedor. É apoio à análise, não previsão garantida.
 
-## Metodologia extensionista
+## Tecnologias e estrutura
 
-O projeto também pretende contribuir para inclusão digital: ouvir pequenos empreendedores, identificar dificuldades reais na leitura de dados, testar uma interface acessível e registrar evidências de aprendizado e utilidade. Qualquer aplicação em negócios reais depende de autorização, proteção dos dados e avaliação dos resultados.
+React, TypeScript, Recharts e Vite. Esta versão não utiliza Python.
 
-## Privacidade e segurança
+- `src/App.tsx`: interface, navegação e importação.
+- `src/analytics.mjs`: validação CSV e cálculos independentes da interface.
+- `src/styles.css`: estilos adaptados do protótipo original.
+- `tests/`: testes dos cálculos e fluxos do navegador.
+- `docs/ROTEIRO-VIDEO.md`: apresentação de até cinco minutos.
+- `docs/RESULTADOS.md`: texto sugerido para descrever esta implementação.
+- `CODE`: referência histórica do código inicial; a aplicação executável usa os arquivos em `src/`.
 
-- Não publicar dados reais de clientes, pedidos, credenciais ou tokens.
-- Utilizar dados sintéticos nos exemplos públicos.
-- Armazenar segredos apenas em variáveis de ambiente, nunca no repositório.
-- Não substituir silenciosamente falhas de API por números fictícios; indicar explicitamente falhas e o modo demonstração.
-- Minimizar dados pessoais em relatórios e integrações, em atenção à LGPD.
+## Limitações e privacidade
 
-## Links
+Esta é uma aplicação frontend, sem backend, banco de dados, login ou persistência.
+Recarregar restaura os dados fictícios. Arquivos importados são processados no navegador e não enviados a servidor pela aplicação.
+Não publique dados reais de clientes ou credenciais.
 
-- [Proposta acadêmica / Issue de referência](https://github.com/adrielyukishi/Analytics/issues/1)
-- [Protótipo citado no trabalho](https://advancegestao.vercel.app/) — disponibilidade e funcionalidades ainda precisam ser verificadas.
+**Não há conexão real com APIs de marketplaces, importação automática de relatórios nativos, IA generativa ou previsão de vendas.**
+A tela Marketplaces identifica as origens da base; não simula contas conectadas.
+Conexões futuras exigem backend, OAuth e gestão segura de tokens.
 
-## Próximo passo
+O código público demonstra funcionalidades técnicas. Não comprova sozinho atendimento a lojas reais ou impactos financeiros; esses resultados precisam de evidências próprias.
 
-Publicar esta documentação, depois auditar o código real do protótipo, decidir a arquitetura e implementar um fluxo completo de **CSV → validação → indicadores → dashboard → recomendações** com testes.
+## Entrega acadêmica
+
+Use o link deste repositório, com a versão final incorporada à branch principal.
+Siga o roteiro do vídeo, grave o sistema funcionando e inclua o endereço do vídeo no relatório.
+Nenhum vídeo foi gravado ou publicado automaticamente.
